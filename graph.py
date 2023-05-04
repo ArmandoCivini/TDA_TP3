@@ -1,4 +1,4 @@
-
+from queue import Queue
 
 
 class Graph:
@@ -30,3 +30,27 @@ class Graph:
         print(self.vertex_names)
         for i in range(len(self.ad_matrix)):
             print(self.vertex_names[i], self.ad_matrix[i])
+
+    def BFS(self):
+        # if this returns an empty list, there is no path
+        visited = [False]*len(self.vertex_names)
+        path = [-1]*len(self.vertex_names)
+
+        queue = Queue(maxsize=len(self.vertex_names))
+
+        source = self.source
+        sink = self.sink
+        queue.put(source)
+        visited[source] = True
+
+        while queue:
+            u = queue.get()
+
+            for i in range(len(self.ad_matrix[u])):
+                if visited[i] == False and self.ad_matrix[u][i][0] > 0:
+                    queue.put(i)
+                    visited[i] = True
+                    path[i] = u
+                    if i == sink:
+                        return path
+        return []

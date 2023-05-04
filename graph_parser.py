@@ -12,6 +12,7 @@ def graph_parser(file):
             minimum_flow = int(data[3])
             graph.add_edge(vertex_origin, vertex_destination, capacity, minimum_flow)
     graph.print_matrix()
+    print(graph.BFS())
     return graph
 
 graph_parser('example.txt')
