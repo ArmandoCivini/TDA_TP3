@@ -69,26 +69,17 @@ class Graph:
         return []
     
     def FordFulkerson(self):
-        max_flow = 0 # There is no flow initially
+        max_flow = 0
         matrix = self.ad_matrix
-        # Augment the flow while there is path from source to sink
         path = self.BFS()
         while path:
-
-            # Find minimum residual capacity of the edges along the
-            # path filled by BFS. Or we can say find the maximum flow
-            # through the path found.
             path_flow = float("Inf")
             s = self.sink
             while(s !=  self.source):
                 path_flow = min (path_flow, matrix[path[s]][s][0])
                 s = path[s]
  
-            # Add path flow to overall flow
             max_flow +=  path_flow
- 
-            # update residual capacities of the edges and reverse edges
-            # along the path
             v = self.sink
             while(v !=  self.source):
                 u = path[v]
