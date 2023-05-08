@@ -44,10 +44,10 @@ class Graph:
         #test only
         self.vertex_names = names
 
-    def BFS(self):
+    def BFS(self, matrix):
         # if this returns an empty list, there is no path
-        visited = [False]*len(self.vertex_names)
-        path = [-1]*len(self.vertex_names)
+        visited = [False]*len(matrix)
+        path = [-1]*len(matrix)
 
         queue = []
 
@@ -59,8 +59,8 @@ class Graph:
         while queue:
             u = queue.pop(0)
 
-            for i in range(len(self.ad_matrix[u])):
-                if visited[i] == False and self.ad_matrix[u][i][0] > 0:
+            for i in range(len(matrix[u])):
+                if visited[i] == False and matrix[u][i][0] > 0:
                     queue.append(i)
                     visited[i] = True
                     path[i] = u
@@ -69,14 +69,16 @@ class Graph:
         return []
     
     def FordFulkerson(self):
+        return self._FordFulkerson(self.ad_matrix)
+    
+    def _FordFulkerson(self, matrix):
         max_flow = 0
-        matrix = self.ad_matrix
-        path = self.BFS()
+        path = self.BFS(matrix)
         while path:
             path_flow = float("Inf")
             s = self.sink
             while(s !=  self.source):
-                path_flow = min (path_flow, matrix[path[s]][s][0])
+                path_flow = min(path_flow, matrix[path[s]][s][0])
                 s = path[s]
  
             max_flow +=  path_flow
@@ -86,5 +88,55 @@ class Graph:
                 matrix[u][v][0] -= path_flow
                 matrix[v][u][0] += path_flow
                 v = path[v]
-            path = self.BFS()        
+            path = self.BFS(matrix)        
         return max_flow, matrix
+    
+    def sum_lower_bound(self):
+        matrix = self.ad_matrix
+        sum = 0
+        for i in range(len(matrix)):
+            for j in range(len(matrix[i])):
+                sum += matrix[i][j][1]
+        return sum
+    
+    def valid_flow(self):
+        produce_vector = [0]*len(self.vertex_names) # how much each vertex produces or demands
+        matrix = self.ad_matrix #get adjency matrix
+        for i in range(len(self.vertex_names)): #convert lower bound edge to node demand and production
+            for j in range(len(self.vertex_names)):
+                produce_vector[i] -= matrix[j][i][1]
+                produce_vector[j] += matrix[j][i][1]
+                matrix[j][i][0] -= matrix[j][i][1] #substract lower bound from capacity
+        
+        matrix[self.sink][self.source] = [float("Inf"), 0] #add edge from sink to source with infinite capacity
+
+        #add new super source and super sink
+        super_source = len(self.vertex_names) 
+        super_sink = len(self.vertex_names) + 1
+        matrix.append([[0,0] for i in range(len(self.vertex_names)+2)])
+        matrix.append([[0,0] for i in range(len(self.vertex_names)+2)])
+        for i in range(len(self.vertex_names)):
+            matrix[i].append([0,0])
+            matrix[i].append([0,0])
+        
+        #add production and demand edges
+        for i in range(len(produce_vector)):
+            produced = produce_vector[i]
+            if produced < 0:
+                matrix[super_source][i][0] = -produced
+            elif produced > 0:
+                matrix[i][super_sink][0] = produced
+        
+        #get valid flow from ford fulkerson
+        max_flow, valid_matrix = self._FordFulkerson(matrix)
+
+        L = self.sum_lower_bound()
+        #check if valid flow is possible
+        super_source_flow = 0
+        for i in range(len(self.vertex_names)+2):
+            super_source_flow += valid_matrix[super_source][i][0]
+        if super_source_flow != L:
+            return False, []
+        return True, valid_matrix
+
+        
