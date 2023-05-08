@@ -51,6 +51,9 @@ def test_valid_flow():
     g = Graph()
     g.add_matrix(graph)
     g.set_source_sink(0, 3)
+    g._add_og_edge([0, 1])
+    g._add_og_edge([1, 2])
+    g._add_og_edge([2, 3])
     g.add_vertex_names(['S', 'A', 'B', 'T'])
     valid, matrix = g.valid_flow()
     print(valid)
@@ -108,6 +111,6 @@ def test_max_flow():
     print(max_flow)
     if max_flow != -1: print_matrix(['S', 'A', 'B', 'T'], matrix)
 
-# test_valid_flow()
+test_valid_flow()
 # test_FF()
-test_max_flow()
+# test_max_flow()
