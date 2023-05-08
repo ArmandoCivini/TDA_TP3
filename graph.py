@@ -25,11 +25,17 @@ class Graph:
         self.original_edges.append([origin, destination])
         self.ad_matrix[origin][destination][0] = capacity
         self.ad_matrix[origin][destination][1] = minimum_flow
+    
+    def _add_og_edge(self, edge):
+        self.original_edges.append(edge)
 
     def print_matrix(self):
-        print(self.vertex_names)
-        for i in range(len(self.ad_matrix)):
-            print(self.vertex_names[i], self.ad_matrix[i])
+        self._print_matrix(self.ad_matrix, self.vertex_names)
+
+    def _print_matrix(self, matrix, names):
+        print(names)
+        for i in range(len(names)):
+            print(names[i], matrix[i][:len(names)])
 
     def add_matrix(self, matrix):
         #test only
@@ -136,5 +142,41 @@ class Graph:
         if super_source_flow != L:
             return False, []
         return True, valid_matrix
+    
+    def valid_flow_transform(self, valid_matrix):
+        matrix = self.ad_matrix
+        for edge in self.original_edges:
+            i, j = edge[0], edge[1]
+            matrix[i][j][0] -= valid_matrix[j][i][0]
+            matrix[j][i][0] = valid_matrix[j][i][0] - matrix[i][j][1]
+        return matrix
+    
+    def add_valid_flow(self, matrix):
+        for edge in self.original_edges:
+            i, j = edge[0], edge[1]
+            matrix[j][i][0] += matrix[i][j][1]
+        max_flow = 0
+        for i in range(len(matrix[self.sink])):
+            max_flow += matrix[self.sink][i][0]
+        return max_flow, matrix
+    
+    def reverse_flow(self, matrix):
+        new_matrix = [[0 for i in range(len(self.vertex_names))] for j in range(len(self.vertex_names))]
+        for edge in self.original_edges:
+            i, j = edge[0], edge[1]
+            new_matrix[i][j] = matrix[j][i][0]
+        return new_matrix
+
+    def max_flow(self):
+        valid, valid_matrix = self.valid_flow()
+        if not valid: return -1, []
+        valid_matrix[self.sink][self.source] = [0,0]
+        transformed_matrix = self.valid_flow_transform(valid_matrix)
+        max_flow, FF_matrix = self._FordFulkerson(transformed_matrix, self.sink, self.source)
+        self._print_matrix(FF_matrix, self.vertex_names + ["S*", "T*"])
+        max_flow, true_matrix = self.add_valid_flow(FF_matrix)
+        final_matrix = self.reverse_flow(true_matrix)
+        self._print_matrix(true_matrix, self.vertex_names)
+        return max_flow, final_matrix
 
         
