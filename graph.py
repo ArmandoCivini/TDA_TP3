@@ -44,15 +44,13 @@ class Graph:
         #test only
         self.vertex_names = names
 
-    def BFS(self, matrix):
+    def BFS(self, matrix, source, sink):
         # if this returns an empty list, there is no path
         visited = [False]*len(matrix)
         path = [-1]*len(matrix)
 
         queue = []
 
-        source = self.source
-        sink = self.sink
         queue.append(source)
         visited[source] = True
 
@@ -69,26 +67,26 @@ class Graph:
         return []
     
     def FordFulkerson(self):
-        return self._FordFulkerson(self.ad_matrix)
+        return self._FordFulkerson(self.ad_matrix, self.sink, self.source)
     
-    def _FordFulkerson(self, matrix):
+    def _FordFulkerson(self, matrix, sink, source):
         max_flow = 0
-        path = self.BFS(matrix)
+        path = self.BFS(matrix, source, sink)
         while path:
             path_flow = float("Inf")
-            s = self.sink
-            while(s !=  self.source):
+            s = sink
+            while(s !=  source):
                 path_flow = min(path_flow, matrix[path[s]][s][0])
                 s = path[s]
  
             max_flow +=  path_flow
-            v = self.sink
-            while(v !=  self.source):
+            v = sink
+            while(v !=  source):
                 u = path[v]
                 matrix[u][v][0] -= path_flow
                 matrix[v][u][0] += path_flow
                 v = path[v]
-            path = self.BFS(matrix)        
+            path = self.BFS(matrix, source, sink)        
         return max_flow, matrix
     
     def sum_lower_bound(self):
@@ -128,13 +126,13 @@ class Graph:
                 matrix[i][super_sink][0] = produced
         
         #get valid flow from ford fulkerson
-        max_flow, valid_matrix = self._FordFulkerson(matrix)
+        max_flow, valid_matrix = self._FordFulkerson(matrix, super_sink, super_source)
 
         L = self.sum_lower_bound()
         #check if valid flow is possible
         super_source_flow = 0
         for i in range(len(self.vertex_names)+2):
-            super_source_flow += valid_matrix[super_source][i][0]
+            super_source_flow += valid_matrix[i][super_source][0]
         if super_source_flow != L:
             return False, []
         return True, valid_matrix
