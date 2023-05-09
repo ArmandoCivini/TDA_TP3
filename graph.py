@@ -1,3 +1,4 @@
+from copy import deepcopy
 
 class Graph:
     def __init__(self):
@@ -49,6 +50,9 @@ class Graph:
     def add_vertex_names(self, names):
         #test only
         self.vertex_names = names
+
+    def get_vertex_names(self):
+        return self.vertex_names
 
     def BFS(self, matrix, source, sink):
         # if this returns an empty list, there is no path
@@ -146,13 +150,16 @@ class Graph:
         max_flow, valid_flow_complete = self.add_valid_flow(valid_matrix)
         return True, valid_flow_complete
     
-    def valid_flow_transform(self, valid_matrix):
-        matrix = self.ad_matrix
+    def valid_flow_transform(self, valid_matrix, og_matrix):
+        og_valid = self.get_just_og_edges(valid_matrix)
+        print(og_valid)
+        print("ACAC")
+        self._print_matrix(og_matrix, self.vertex_names)
         for edge in self.original_edges:
             i, j = edge[0], edge[1]
-            matrix[i][j][0] -= valid_matrix[j][i][0]
-            matrix[j][i][0] = valid_matrix[j][i][0] - matrix[i][j][1]
-        return matrix
+            og_matrix[i][j][0] -= og_valid[i][j]
+            og_matrix[j][i][0] = og_valid[i][j] - og_matrix[i][j][1]
+        return og_matrix
     
     def add_valid_flow(self, matrix):
         for edge in self.original_edges:
@@ -185,18 +192,19 @@ class Graph:
             matrix[i].pop()
 
     def max_flow(self):
+        og_matrix = deepcopy(self.ad_matrix)
         valid, valid_matrix = self.valid_flow()
         if not valid: return -1, []
         valid_matrix[self.sink][self.source] = [0,0]
         print("valid matrix")
         self._print_matrix(valid_matrix, self.vertex_names + ["S*", "T*"])
-        transformed_matrix = self.valid_flow_transform(valid_matrix)
+        transformed_matrix = self.valid_flow_transform(valid_matrix, og_matrix)
         print("after transform")
         self._print_matrix(transformed_matrix, self.vertex_names)
         max_flow, FF_matrix = self._FordFulkerson(transformed_matrix, self.sink, self.source)
         print("after FF")
-        self._print_matrix(FF_matrix, self.vertex_names + ["S*", "T*"])
-        max_flow, true_matrix = self.add_valid_flow(FF_matrix)
+        self._print_matrix(FF_matrix, self.vertex_names)
+        max_flow, true_matrix = self.add_valid_flow(FF_matrix) #TODO: fix this should be with the valid flow not the min cap
         final_matrix = self.reverse_flow(true_matrix)
         print("adding back the flow")
         self._print_matrix(true_matrix, self.vertex_names)
