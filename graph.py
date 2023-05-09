@@ -114,10 +114,6 @@ class Graph:
     
     def valid_flow(self):
         produce_vector, matrix = self.create_produce_vector()
-        print("produce vector:")
-        print(produce_vector)
-        # print("matrix:")
-        # print(matrix)
         
         matrix[self.sink][self.source] = [float("inf"), 0] #add edge from sink to source with infinite capacity
 
@@ -138,12 +134,8 @@ class Graph:
             elif produced > 0:
                 matrix[i][super_sink][0] = produced
         
-        print("matrix:")
-        self._print_matrix(matrix, self.vertex_names + ["S*", "T*"])
         #get valid flow from ford fulkerson
         max_flow, valid_matrix = self._FordFulkerson(matrix, super_sink, super_source)
-        print("valid matrix:")
-        self._print_matrix(valid_matrix, self.vertex_names + ["S*", "T*"])
         L = self.sum_lower_bound(produce_vector)
         #check if valid flow is possible
         super_source_flow = 0
@@ -152,7 +144,7 @@ class Graph:
         if super_source_flow != L:
             return False, []
         max_flow, valid_flow_complete = self.add_valid_flow(valid_matrix)
-        return True, valid_flow_complete #TODO: return valid matrix
+        return True, valid_flow_complete
     
     def valid_flow_transform(self, valid_matrix):
         matrix = self.ad_matrix
@@ -165,12 +157,18 @@ class Graph:
     def add_valid_flow(self, matrix):
         for edge in self.original_edges:
             i, j = edge[0], edge[1]
-            print(matrix[i][j][1])
             matrix[j][i][0] += matrix[i][j][1]
         max_flow = 0
         for i in range(len(matrix[self.sink])):
             max_flow += matrix[self.sink][i][0]
         return max_flow, matrix
+    
+    def get_just_og_edges(self, matrix):
+        new_matrix = [[0 for i in range(len(self.vertex_names))] for j in range(len(self.vertex_names))]
+        for edge in self.original_edges:
+            i, j = edge[0], edge[1]
+            new_matrix[i][j] = matrix[j][i][0]
+        return new_matrix
     
     def reverse_flow(self, matrix):
         new_matrix = [[0 for i in range(len(self.vertex_names))] for j in range(len(self.vertex_names))]

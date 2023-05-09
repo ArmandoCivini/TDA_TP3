@@ -58,7 +58,10 @@ def test_valid_flow():
     g = graph_parser('example_video.txt')
     valid, matrix = g.valid_flow()
     print(valid)
-    if valid: print_matrix(['S', 'T','A', 'B', 'C', 'D', 'S*', 'T*'], matrix)
+    if not valid: return
+    print_matrix(['S', 'T','A', 'B', 'C', 'D', 'S*', 'T*'], matrix)
+    print_matrix(['S', 'T','A', 'B', 'C', 'D'], g.get_just_og_edges(matrix))
+
 
 def test_max_flow():
     # graph = [[0, 16, 13, 0, 0, 0],
