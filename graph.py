@@ -95,24 +95,31 @@ class Graph:
             path = self.BFS(matrix, source, sink)        
         return max_flow, matrix
     
-    def sum_lower_bound(self):
-        matrix = self.ad_matrix
+    def sum_lower_bound(self, produce_vector):
         sum = 0
-        for i in range(len(matrix)):
-            for j in range(len(matrix[i])):
-                sum += matrix[i][j][1]
+        for value in produce_vector:
+            if value > 0:
+                sum += value
         return sum
     
-    def valid_flow(self):
+    def create_produce_vector(self):
         produce_vector = [0]*len(self.vertex_names) # how much each vertex produces or demands
         matrix = self.ad_matrix #get adjency matrix
         for i in range(len(self.vertex_names)): #convert lower bound edge to node demand and production
             for j in range(len(self.vertex_names)):
-                produce_vector[i] -= matrix[j][i][1]
-                produce_vector[j] += matrix[j][i][1]
-                matrix[j][i][0] -= matrix[j][i][1] #substract lower bound from capacity
+                produce_vector[i] += matrix[i][j][1]
+                produce_vector[j] -= matrix[i][j][1]
+                matrix[i][j][0] -= matrix[i][j][1] #substract lower bound from capacity
+        return produce_vector, matrix
+    
+    def valid_flow(self):
+        produce_vector, matrix = self.create_produce_vector()
+        print("produce vector:")
+        print(produce_vector)
+        # print("matrix:")
+        # print(matrix)
         
-        matrix[self.sink][self.source] = [float("Inf"), 0] #add edge from sink to source with infinite capacity
+        matrix[self.sink][self.source] = [float("inf"), 0] #add edge from sink to source with infinite capacity
 
         #add new super source and super sink
         super_source = len(self.vertex_names) 
@@ -131,17 +138,21 @@ class Graph:
             elif produced > 0:
                 matrix[i][super_sink][0] = produced
         
+        print("matrix:")
+        self._print_matrix(matrix, self.vertex_names + ["S*", "T*"])
         #get valid flow from ford fulkerson
         max_flow, valid_matrix = self._FordFulkerson(matrix, super_sink, super_source)
-
-        L = self.sum_lower_bound()
+        print("valid matrix:")
+        self._print_matrix(valid_matrix, self.vertex_names + ["S*", "T*"])
+        L = self.sum_lower_bound(produce_vector)
         #check if valid flow is possible
         super_source_flow = 0
         for i in range(len(self.vertex_names)+2):
             super_source_flow += valid_matrix[i][super_source][0]
         if super_source_flow != L:
             return False, []
-        return True, valid_matrix
+        max_flow, valid_flow_complete = self.add_valid_flow(valid_matrix)
+        return True, valid_flow_complete #TODO: return valid matrix
     
     def valid_flow_transform(self, valid_matrix):
         matrix = self.ad_matrix
@@ -154,6 +165,7 @@ class Graph:
     def add_valid_flow(self, matrix):
         for edge in self.original_edges:
             i, j = edge[0], edge[1]
+            print(matrix[i][j][1])
             matrix[j][i][0] += matrix[i][j][1]
         max_flow = 0
         for i in range(len(matrix[self.sink])):
