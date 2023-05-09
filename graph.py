@@ -152,9 +152,6 @@ class Graph:
     
     def valid_flow_transform(self, valid_matrix, og_matrix):
         og_valid = self.get_just_og_edges(valid_matrix)
-        print(og_valid)
-        print("ACAC")
-        self._print_matrix(og_matrix, self.vertex_names)
         for edge in self.original_edges:
             i, j = edge[0], edge[1]
             og_matrix[i][j][0] -= og_valid[i][j]
@@ -193,21 +190,19 @@ class Graph:
 
     def max_flow(self):
         og_matrix = deepcopy(self.ad_matrix)
+
         valid, valid_matrix = self.valid_flow()
         if not valid: return -1, []
         valid_matrix[self.sink][self.source] = [0,0]
-        print("valid matrix")
-        self._print_matrix(valid_matrix, self.vertex_names + ["S*", "T*"])
+
         transformed_matrix = self.valid_flow_transform(valid_matrix, og_matrix)
-        print("after transform")
-        self._print_matrix(transformed_matrix, self.vertex_names)
+
         max_flow, FF_matrix = self._FordFulkerson(transformed_matrix, self.sink, self.source)
-        print("after FF")
-        self._print_matrix(FF_matrix, self.vertex_names)
-        max_flow, true_matrix = self.add_valid_flow(FF_matrix) #TODO: fix this should be with the valid flow not the min cap
+
+        max_flow, true_matrix = self.add_valid_flow(FF_matrix)
+
         final_matrix = self.reverse_flow(true_matrix)
-        print("adding back the flow")
-        self._print_matrix(true_matrix, self.vertex_names)
+
         return max_flow, final_matrix
 
         
